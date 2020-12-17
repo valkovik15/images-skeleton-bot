@@ -4,10 +4,12 @@ from io import BytesIO
 from PIL import Image
 import telegram
 import os
+from skeleton import Skeletonizer
 
 token = os.getenv("TOKEN", '')  # Получаем из переменных Heroku
 model_list = {}  # Соответствие юзер - модель
 FIRST = range(1)
+skeletonizer = Skeletonizer()
 
 def send_gif_on_photo(update, context):
     chat_id = update.message.chat_id
@@ -19,10 +21,11 @@ def send_gif_on_photo(update, context):
 
     content_image_stream = BytesIO()
     image_file.download(out=content_image_stream)
+    skeletonizer.skeletonize(content_image_stream)
     # output = fast_model.stylize(model_list[chat_id], content_image_stream)
 
     # теперь отправим назад фото
-    output = Image.open(content_image_stream)
+    output = skeletonizer.skeletonize(content_image_stream)
     output_stream = BytesIO()
     output.save(output_stream, format='PNG')
     output_stream.seek(0)
