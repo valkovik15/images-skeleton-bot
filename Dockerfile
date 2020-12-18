@@ -5,5 +5,5 @@ RUN pip3 install Pillow
 RUN pip3 install scikit-image
 RUN mkdir /skeleton-bot
 ADD . /skeleton-bot
-WORKDIR /skeleton-bot
+WORKDIR /skeleton-bot/skeleton-bot
 CMD python main.py

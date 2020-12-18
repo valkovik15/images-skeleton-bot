@@ -6,8 +6,7 @@ import telegram
 import os
 from skeleton import Skeletonizer
 
-token = os.getenv("TOKEN", '')  # Получаем из переменных Heroku
-model_list = {}  # Соответствие юзер - модель
+token = os.getenv("TOKEN", '1449221385:AAFaE6J7hYNINWvVyGhKY6SekV_tqQHuJrQ')  # Получаем из переменных Heroku
 FIRST = range(1)
 skeletonizer = Skeletonizer()
 
