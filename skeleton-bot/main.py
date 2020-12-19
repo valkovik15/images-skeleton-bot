@@ -1,5 +1,3 @@
-# from model import StyleTransferModel
-# from telegram_token import token
 from io import BytesIO
 from PIL import Image
 import telegram
@@ -9,6 +7,7 @@ from skeleton import Skeletonizer
 token = os.getenv("TOKEN", '1449221385:AAFaE6J7hYNINWvVyGhKY6SekV_tqQHuJrQ')  # Получаем из переменных Heroku
 FIRST = range(1)
 skeletonizer = Skeletonizer()
+
 
 def send_gif_on_photo(update, context):
     chat_id = update.message.chat_id
@@ -20,19 +19,23 @@ def send_gif_on_photo(update, context):
 
     content_image_stream = BytesIO()
     image_file.download(out=content_image_stream)
-    skeletonizer.skeletonize(content_image_stream)
-    # output = fast_model.stylize(model_list[chat_id], content_image_stream)
 
     # теперь отправим назад фото
-    output = skeletonizer.skeletonize(content_image_stream)
+    iterations = 75
+    iteration_time = 300
+    output = skeletonizer.skeletonize(content_image_stream, iterations)
     output_stream = BytesIO()
-    output.save(output_stream, format='PNG')
+    output[0].save(output_stream, format='GIF', save_all=True, append_images=output[1:], loop=0,
+                   duration=iteration_time)
     output_stream.seek(0)
-    context.bot.send_photo(chat_id, photo=output_stream)
+    context.bot.send_animation(chat_id, animation=output_stream, duration=iterations * iteration_time // 1000,
+                               caption='skelet gif')
+
 
 def start(update, context):
     update.message.reply_text(main_menu_message())
     return FIRST
+
 
 def main_menu_message():
     return 'Upload image for skeleton creation'
@@ -43,8 +46,10 @@ def help_callback(update, context):
     update.message.reply_text(
         "This bot creates GIF, illustrating the proccess of image skeleton making. Use /start")
 
+
 if __name__ == '__main__':
-    from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, MessageHandler, Filters, ConversationHandler
+    from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, MessageHandler, Filters, \
+        ConversationHandler
     import logging
 
     # Включим самый базовый логгинг, чтобы видеть сообщения об ошибках
@@ -70,8 +75,7 @@ if __name__ == '__main__':
                           port=PORT,
                           url_path=token)
     if HEROKU_APP_NAME is None:
-        updater.bot.set_webhook("https://16e6404716b7.ngrok.io/{}".format(token)) #вставить сюда для локального запуска ngrok http -p 8443
+        updater.bot.set_webhook(
+            "https://0cf4bc787790.ngrok.io/{}".format(token))  # вставить сюда для локального запуска ngrok http -p 8443
     else:
         updater.bot.set_webhook("https://{}.herokuapp.com/{}".format(HEROKU_APP_NAME, token))
-
-    
