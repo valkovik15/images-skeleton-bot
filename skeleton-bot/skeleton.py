@@ -1,7 +1,9 @@
-import re
-from PIL import Image
+import string
+import random
+
+from PIL import Image, ImageDraw, ImageFont
 import numpy as np
-from skimage.morphology import binary_dilation, binary_erosion
+from skimage.morphology import binary_erosion
 
 
 class Skeletonizer():
@@ -9,27 +11,35 @@ class Skeletonizer():
 
     def __init__(self):
         '''Инициализация структурных элементов'''
-        T_1=(np.array([[True, True, True], [False, True, False], [False, False, False]]), np.array([[False, False, False], [False, False, False], [True, True, True]]))
-        T_2=(np.array([[True, False, False], [True, True, False], [True, False, False]]), np.array([[False, False, True], [False, False, True], [False, False, True]]))
-        T_3=(np.array([[False, False, False], [False, True, False], [True, True, True]]), np.array([[True, True, True], [False, False, False], [False, False, False]]))
-        T_4=(np.array([[False, False, True], [False, True, True], [False, False, True]]), np.array([[True, False, False], [True, False, False], [True, False, False]]))
-        T_5=(np.array([[False, True, False], [False, True, True], [False, False, False]]), np.array([[False, False, False], [True, False, False], [True, True, False]]))
-        T_6=(np.array([[False, True, False], [True, True, False], [False, False, False]]), np.array([[False, False, False], [False, False, True], [False, True, True]]))
-        T_7=(np.array([[False, False, False], [True, True, False], [False, True, False]]), np.array([[False, True, True], [False, False, True], [False, False, False]]))
-        T_8=(np.array([[False, False, False], [False, True, True], [False, True, False]]), np.array([[True, True, False], [True, False, False],  [False, False, False]]))
+        T_1 = (np.array([[True, True, True], [False, True, False], [False, False, False]]),
+               np.array([[False, False, False], [False, False, False], [True, True, True]]))
+        T_2 = (np.array([[True, False, False], [True, True, False], [True, False, False]]),
+               np.array([[False, False, True], [False, False, True], [False, False, True]]))
+        T_3 = (np.array([[False, False, False], [False, True, False], [True, True, True]]),
+               np.array([[True, True, True], [False, False, False], [False, False, False]]))
+        T_4 = (np.array([[False, False, True], [False, True, True], [False, False, True]]),
+               np.array([[True, False, False], [True, False, False], [True, False, False]]))
+        T_5 = (np.array([[False, True, False], [False, True, True], [False, False, False]]),
+               np.array([[False, False, False], [True, False, False], [True, True, False]]))
+        T_6 = (np.array([[False, True, False], [True, True, False], [False, False, False]]),
+               np.array([[False, False, False], [False, False, True], [False, True, True]]))
+        T_7 = (np.array([[False, False, False], [True, True, False], [False, True, False]]),
+               np.array([[False, True, True], [False, False, True], [False, False, False]]))
+        T_8 = (np.array([[False, False, False], [False, True, True], [False, True, False]]),
+               np.array([[True, True, False], [True, False, False], [False, False, False]]))
         self.str_els = [T_1, T_2, T_3, T_4, T_5, T_6, T_7, T_8]
 
-    def skeletonize(self, image):
-
+    def skeletonize(self, image, iterations):
         content_image = Image.open(image)
         gray = content_image.convert('L')
 
         # Let numpy do the heavy lifting for converting pixels to pure black or white
         bw = np.asarray(gray).copy()
-        bin_img = np.where(bw>128, 255, 0).astype(np.bool)
+        bin_img = np.where(bw > 128, 255, 0).astype(np.bool)
 
+        step_images = self.skeleton(bin_img, iterations)
 
-        return Image.fromarray(self.skeleton(bin_img, 15))
+        return step_images
 
     def thinning(self, img, a, b):
         b_e = binary_erosion(img, a)
@@ -41,8 +51,14 @@ class Skeletonizer():
         return np.logical_and(np.logical_xor(a, b), np.logical_and(a, ~b))
 
     def skeleton(self, img, n):
+        step_images = []
         for i in range(n):
             for j in range(len(self.str_els)):
                 a, b = self.str_els[j]
                 img = self.thinning(img, np.array(a).astype(np.bool), np.array(b).astype(np.bool))
-        return img
+            image_from_step = Image.fromarray(img).convert(mode='RGB')
+            draw = ImageDraw.Draw(image_from_step)
+            font = ImageFont.truetype("arial.ttf", 45)
+            draw.text((0, 0), 'step = ' + str(i), (255, 0, 0), font=font)
+            step_images.append(image_from_step)
+        return step_images
