@@ -3,7 +3,9 @@ import random
 
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
-from skimage.morphology import binary_erosion
+from skimage.morphology import binary_erosion, erosion
+from skimage.filters import threshold_otsu
+from skimage.color import rgb2gray
 
 
 class Skeletonizer():
@@ -31,13 +33,10 @@ class Skeletonizer():
 
     def skeletonize(self, image, iterations):
         content_image = Image.open(image)
-        gray = content_image.convert('L')
-
-        # Let numpy do the heavy lifting for converting pixels to pure black or white
-        bw = np.asarray(gray).copy()
-        bin_img = np.where(bw > 128, 255, 0).astype(np.bool)
-
-        step_images = self.skeleton(bin_img, iterations)
+        gray = rgb2gray(np.asarray(content_image))
+        thresh = threshold_otsu(gray)
+        bin_g = gray > thresh
+        step_images = self.skeleton(bin_g, iterations)
 
         return step_images
 
